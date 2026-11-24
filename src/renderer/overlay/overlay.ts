@@ -74,6 +74,9 @@ function handleReport(report: NowPlaying): void {
     lastTrackId = report.trackId
     clock.reset(report.positionMs, report.isPlaying, now)
     stage.configure(report.trackId, report.lines)
+    // Counts only: lyric text stays out of logs.
+    console.info(`[glowverse] overlay lyrics ${report.lines.length} lines`)
+
   } else if (clock.report(report.positionMs, report.isPlaying, now)) {
     stage.clear()
   }

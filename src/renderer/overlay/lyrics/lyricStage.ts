@@ -9,6 +9,7 @@ import {
 } from './constellation'
 
 const SEEK_FADE_MS = 300
+const TRACK_FADE_MS = 350
 const DIRTY_MARGIN_PX = 12
 
 const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3)
@@ -36,12 +37,30 @@ export class LyricStage {
   private boundsMinY = 0
   private boundsMaxX = 0
   private boundsMaxY = 0
+  private trackId = ''
+  private canvas: HTMLCanvasElement | null = null
+  private fadeImage: HTMLCanvasElement | null = null
+  private fadeElapsedMs = 0
 
-  configure(_trackId: string, lines: readonly LyricLine[]): void {
+  configure(trackId: string, lines: readonly LyricLine[]): void {
+    // Crossfade the previous track's lines out instead of cutting them.
+    if (trackId !== this.trackId && this.lines.length > 0 && this.canvas && this.canvas.width > 0) {
+      this.captureFade(this.canvas)
+    }
+    this.trackId = trackId
     this.lines = buildTimedLines(lines)
     this.layouts = this.lines.map(() => null)
     this.seekFade = 0
     this.needsFullClear = true
+  }
+
+  private captureFade(source: HTMLCanvasElement): void {
+    const copy = document.createElement('canvas')
+    copy.width = source.width
+    copy.height = source.height
+    copy.getContext('2d')?.drawImage(source, 0, 0)
+    this.fadeImage = copy
+    this.fadeElapsedMs = 0
   }
 
   /** Clear the canvas and crossfade the new lyric state in (used on seeks). */
@@ -95,8 +114,19 @@ export class LyricStage {
 
   render(ctx: CanvasRenderingContext2D, timeMs: number, deltaMs: number, visible: boolean): void {
     this.seekFade = Math.min(1, this.seekFade + deltaMs / SEEK_FADE_MS)
+    this.canvas = ctx.canvas
 
-    if (this.needsFullClear) {
+    if (this.fadeImage) {
+      ctx.clearRect(0, 0, this.viewWidth, this.viewHeight)
+      const progress = Math.min(1, this.fadeElapsedMs / TRACK_FADE_MS)
+      ctx.globalAlpha = 1 - easeOutCubic(progress)
+      ctx.drawImage(this.fadeImage, 0, 0)
+      ctx.globalAlpha = 1
+      this.fadeElapsedMs += deltaMs
+      if (progress >= 1) this.fadeImage = null
+      this.hasDirty = false
+      this.needsFullClear = false
+    } else if (this.needsFullClear) {
       ctx.clearRect(0, 0, this.viewWidth, this.viewHeight)
       this.needsFullClear = false
       this.hasDirty = false

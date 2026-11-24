@@ -1,4 +1,5 @@
 import type { DisplayInfo } from '../../shared/display'
+import type { LyricsStatus } from '../../shared/lyrics/provider'
 import type { DemoCommand, DemoTrackSummary, NowPlaying, SourceStatus } from '../../shared/nowPlaying'
 import type { Settings } from '../../shared/settings'
 
@@ -21,6 +22,7 @@ const sourceDetail = element<HTMLElement>('sourceDetail')
 const tokenCode = element<HTMLElement>('pairingToken')
 const copyTokenButton = element<HTMLButtonElement>('copyToken')
 const regenerateTokenButton = element<HTMLButtonElement>('regenerateToken')
+const lyricsStatusLine = element<HTMLElement>('lyricsStatus')
 
 const demoTrackSelect = element<HTMLSelectElement>('demoTrack')
 const demoPlayButton = element<HTMLButtonElement>('demoPlay')
@@ -137,6 +139,22 @@ function patch(next: Partial<Settings>): void {
   if (flushScheduled) return
   flushScheduled = true
   requestAnimationFrame(flushPatch)
+}
+
+function renderLyricsStatus(next: LyricsStatus): void {
+  if (next.phase === 'searching') {
+    lyricsStatusLine.textContent = 'Searching for synced lyrics…'
+  } else if (next.phase === 'found') {
+    lyricsStatusLine.textContent = `Synced lyrics · ${next.source ?? 'unknown'} · ${next.lineCount} lines`
+  } else if (next.phase === 'instrumental') {
+    lyricsStatusLine.textContent = 'Instrumental'
+  } else if (next.phase === 'not-found') {
+    lyricsStatusLine.textContent = 'No synced lyrics — rim only'
+  } else if (next.phase === 'error') {
+    lyricsStatusLine.textContent = 'Lyrics lookup failed'
+  } else {
+    lyricsStatusLine.textContent = 'No track'
+  }
 }
 
 function renderSource(next: SourceStatus): void {
@@ -310,6 +328,7 @@ for (const color of colorInputs) {
 window.glowverse.onSettings((settings) => render(settings))
 window.glowverse.onNowPlaying((report) => renderDemo(report))
 window.glowverse.onSourceStatus((next) => renderSource(next))
+window.glowverse.onLyricsStatus((next) => renderLyricsStatus(next))
 
 void window.glowverse.getSettings().then((settings) => {
   render(settings)
@@ -317,3 +336,4 @@ void window.glowverse.getSettings().then((settings) => {
 }).then(() => window.glowverse.getNowPlaying()).then((report) => renderDemo(report))
 
 void window.glowverse.getSourceStatus().then((next) => renderSource(next))
+void window.glowverse.getLyricsStatus().then((next) => renderLyricsStatus(next))

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, screen } from 'electron'
 import { IPC } from '../shared/ipc'
 import type { DisplayInfo } from '../shared/display'
+import type { LyricsStatus } from '../shared/lyrics/provider'
 import type { DemoCommand, NowPlaying, SourceStatus } from '../shared/nowPlaying'
 import type { Settings } from '../shared/settings'
 import { startBridge, type BridgeServer } from './bridge/nowPlayingServer'
@@ -83,7 +84,9 @@ async function bootstrap(): Promise<void> {
   let bridge: BridgeServer | null = null
 
   const hub = createNowPlayingHub({
-    onTrackChange: () => store.patch({ lyricOffsetMs: 0 })
+    cacheDir: app.getPath('userData'),
+    onTrackChange: () => store.patch({ lyricOffsetMs: 0 }),
+    onLyricsStatus: (status: LyricsStatus) => broadcast(IPC.lyricsStatus, status)
   })
 
   const publish = (next: Settings): void => {
@@ -106,10 +109,15 @@ async function bootstrap(): Promise<void> {
     const partial = typeof patch === 'object' && patch !== null ? (patch as Partial<Settings>) : {}
     return store.patch(partial)
   })
-  ipcMain.handle(IPC.tokenRegenerate, () => store.patch({ pairingToken: generatePairingToken() }))
+  ipcMain.handle(IPC.tokenRegenerate, () => {
+    const next = store.patch({ pairingToken: generatePairingToken() })
+    bridge?.unpair()
+    return next
+  })
   ipcMain.handle(IPC.displaysGet, () => collectDisplays())
   ipcMain.handle(IPC.nowPlayingGet, () => hub.report())
   ipcMain.handle(IPC.sourceStatusGet, () => hub.status())
+  ipcMain.handle(IPC.lyricsStatusGet, () => hub.lyricsStatus())
   ipcMain.handle(IPC.demoTracksGet, () => hub.tracks())
   ipcMain.handle(IPC.demoCommand, (_event, command: DemoCommand) => {
     if (command && command.action === 'select') store.patch({ lyricOffsetMs: 0 })

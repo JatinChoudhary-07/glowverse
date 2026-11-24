@@ -13,6 +13,8 @@ const ALLOWED_HEADERS = 'Content-Type, X-Glowverse-Token'
 export interface BridgeServer {
   port: number
   close(): void
+  /** Forget the pinned extension origin (used when the token is regenerated). */
+  unpair(): void
 }
 
 export interface BridgeOptions {
@@ -27,6 +29,9 @@ export interface BridgeOptions {
  */
 export async function startBridge(options: BridgeOptions): Promise<BridgeServer> {
   const rateTimes: number[] = []
+  // The first extension origin that presents the right token is pinned; every
+  // other extension origin is rejected until the token is regenerated.
+  let pairedOrigin: string | null = null
 
   const tokenMatches = (provided: string | undefined): boolean => {
     const expected = options.getToken()
@@ -121,6 +126,15 @@ export async function startBridge(options: BridgeOptions): Promise<BridgeServer>
       return
     }
 
+    const origin = request.headers.origin
+    if (typeof origin === 'string' && origin.startsWith('chrome-extension://')) {
+      if (pairedOrigin === null) pairedOrigin = origin
+      else if (pairedOrigin !== origin) {
+        send(request, response, 403, { error: 'extension origin not paired' })
+        return
+      }
+    }
+
     const path = (request.url ?? '').split('?')[0]
 
     if (path === '/v1/health' && request.method === 'GET') {
@@ -173,6 +187,9 @@ export async function startBridge(options: BridgeOptions): Promise<BridgeServer>
         port,
         close: () => {
           server.close()
+        },
+        unpair: () => {
+          pairedOrigin = null
         }
       }
     }

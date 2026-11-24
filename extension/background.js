@@ -14,6 +14,16 @@ const ready = chrome.storage.local
   })
   .catch(() => {})
 
+// MV3 stops the worker when idle; every wake starts by re-checking the app so the
+// extension reconnects on its own without the popup having to be opened.
+void ready.then(() => health())
+chrome.runtime.onStartup?.addListener(() => {
+  void ready.then(() => health())
+})
+chrome.runtime.onInstalled?.addListener(() => {
+  void ready.then(() => health())
+})
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (!message || typeof message !== 'object') return false
 

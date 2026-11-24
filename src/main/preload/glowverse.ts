@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { DisplayInfo } from '../../shared/display'
 import { IPC } from '../../shared/ipc'
+import type { LyricsStatus } from '../../shared/lyrics/provider'
 import type { DemoCommand, DemoTrackSummary, NowPlaying, SourceStatus } from '../../shared/nowPlaying'
 import type { Settings } from '../../shared/settings'
 
@@ -32,6 +33,14 @@ const api = {
     ipcRenderer.on(IPC.sourceStatus, handler)
     return () => {
       ipcRenderer.removeListener(IPC.sourceStatus, handler)
+    }
+  },
+  getLyricsStatus: (): Promise<LyricsStatus> => ipcRenderer.invoke(IPC.lyricsStatusGet) as Promise<LyricsStatus>,
+  onLyricsStatus: (callback: (status: LyricsStatus) => void): (() => void) => {
+    const handler = (_event: IpcRendererEvent, status: LyricsStatus): void => callback(status)
+    ipcRenderer.on(IPC.lyricsStatus, handler)
+    return () => {
+      ipcRenderer.removeListener(IPC.lyricsStatus, handler)
     }
   },
   getDemoTracks: (): Promise<DemoTrackSummary[]> =>

@@ -8,6 +8,8 @@ export const IPC = {
   nowPlayingReport: 'glowverse:nowplaying:report',
   sourceStatusGet: 'glowverse:source:status:get',
   sourceStatus: 'glowverse:source:status',
+  lyricsStatusGet: 'glowverse:lyrics:status:get',
+  lyricsStatus: 'glowverse:lyrics:status',
   demoTracksGet: 'glowverse:demo:tracks',
   demoCommand: 'glowverse:demo:command'
 } as const
