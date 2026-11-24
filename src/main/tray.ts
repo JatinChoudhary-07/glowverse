@@ -34,6 +34,12 @@ export function createTrayController(handlers: TrayHandlers): TrayController {
         click: (item) => handlers.patchSettings({ overlayEnabled: item.checked })
       },
       {
+        label: 'Show lyrics',
+        type: 'checkbox',
+        checked: settings.showLyrics,
+        click: (item) => handlers.patchSettings({ showLyrics: item.checked })
+      },
+      {
         label: 'Pause overlay',
         type: 'checkbox',
         checked: settings.paused,

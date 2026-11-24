@@ -7,6 +7,8 @@ import { logRendererMessages } from './rendererDiagnostics'
 
 export interface OverlayManager {
   apply(settings: Settings): void
+  /** First live overlay window (used by the dev capture harness). */
+  firstWindow(): BrowserWindow | null
   destroy(): void
 }
 
@@ -148,6 +150,12 @@ export function createOverlayManager(): OverlayManager {
       for (const window of windows.values()) {
         if (!window.isDestroyed()) window.webContents.send(IPC.settingsChanged, next)
       }
+    },
+    firstWindow(): BrowserWindow | null {
+      for (const window of windows.values()) {
+        if (!window.isDestroyed()) return window
+      }
+      return null
     },
     destroy(): void {
       if (syncTimer) clearTimeout(syncTimer)

@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { DisplayInfo } from '../../shared/display'
 import { IPC } from '../../shared/ipc'
+import type { DemoCommand, DemoTrackSummary, NowPlaying } from '../../shared/nowPlaying'
 import type { Settings } from '../../shared/settings'
 
 const api = {
@@ -14,7 +15,19 @@ const api = {
     return () => {
       ipcRenderer.removeListener(IPC.settingsChanged, handler)
     }
-  }
+  },
+  getNowPlaying: (): Promise<NowPlaying> => ipcRenderer.invoke(IPC.nowPlayingGet) as Promise<NowPlaying>,
+  onNowPlaying: (callback: (report: NowPlaying) => void): (() => void) => {
+    const handler = (_event: IpcRendererEvent, report: NowPlaying): void => callback(report)
+    ipcRenderer.on(IPC.nowPlayingReport, handler)
+    return () => {
+      ipcRenderer.removeListener(IPC.nowPlayingReport, handler)
+    }
+  },
+  getDemoTracks: (): Promise<DemoTrackSummary[]> =>
+    ipcRenderer.invoke(IPC.demoTracksGet) as Promise<DemoTrackSummary[]>,
+  demoCommand: (command: DemoCommand): Promise<NowPlaying> =>
+    ipcRenderer.invoke(IPC.demoCommand, command) as Promise<NowPlaying>
 }
 
 contextBridge.exposeInMainWorld('glowverse', api)

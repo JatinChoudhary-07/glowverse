@@ -277,6 +277,11 @@ input[type='color']::-webkit-color-swatch {
   outline-offset: 2px;
 }
 
+.ghost--small {
+  padding: 6px 16px;
+  min-width: 72px;
+}
+
 .ghost {
   align-self: flex-start;
   padding: 8px 18px;

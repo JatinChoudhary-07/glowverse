@@ -31,9 +31,37 @@
             <span class="switch__track" aria-hidden="true"></span>
           </label>
         </div>
+        <div class="row row--toggle">
+          <div class="row__text">
+            <span>Show lyrics</span>
+            <small>Word by word lines above the rim.</small>
+          </div>
+          <label class="switch">
+            <input id="showLyrics" type="checkbox" />
+            <span class="switch__track" aria-hidden="true"></span>
+          </label>
+        </div>
         <div class="row row--stack">
           <div class="row__text"><span>Displays</span></div>
           <ul id="displays" class="displays"></ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Demo</h2>
+        <div class="row row--select">
+          <div class="row__text">
+            <span>Track</span>
+            <small>Original lyrics, no music needed.</small>
+          </div>
+          <select id="demoTrack" class="select"></select>
+        </div>
+        <div class="control">
+          <div class="control__head">
+            <button id="demoPlay" class="ghost ghost--small" type="button">Play</button>
+            <output id="demoTime">0:00 / 0:20</output>
+          </div>
+          <input id="demoSeek" type="range" min="0" max="20000" step="100" value="0" />
         </div>
       </section>
 
@@ -63,7 +91,7 @@
         <div class="row row--select">
           <div class="row__text">
             <span>Motion</span>
-            <small>Beat sync follows the 96 BPM demo track until audio capture lands.</small>
+            <small>Beat sync follows the current track's BPM.</small>
           </div>
           <select id="motionMode" class="select">
             <option value="beat">Beat sync</option>
@@ -74,7 +102,36 @@
       </section>
 
       <section class="section">
+        <h2>Lyrics</h2>
+        <div class="control">
+          <div class="control__head">
+            <span>Size</span>
+            <output id="lyricSizeValue">40 px</output>
+          </div>
+          <input id="lyricSize" type="range" min="20" max="72" step="1" />
+        </div>
+        <div class="control">
+          <div class="control__head">
+            <span>Offset</span>
+            <output id="lyricOffsetValue">0 ms</output>
+          </div>
+          <input id="lyricOffset" type="range" min="-1000" max="1000" step="100" />
+        </div>
+        <small class="hint">Offset resets when the track changes.</small>
+      </section>
+
+      <section class="section">
         <h2>Palette</h2>
+        <div class="row row--select">
+          <div class="row__text">
+            <span>Source</span>
+            <small>Auto follows the demo track's colours.</small>
+          </div>
+          <select id="paletteMode" class="select">
+            <option value="auto">Auto</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
         <div class="control control--color">
           <div class="control__head">
             <span>Primary</span>

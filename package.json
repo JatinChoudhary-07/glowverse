@@ -11,6 +11,7 @@
     "build": "npm run typecheck && electron-vite build",
     "start": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test:brightness": "node scripts/testBrightness.mts",
     "icon": "node scripts/makeTrayIcon.cjs"
   },
   "devDependencies": {

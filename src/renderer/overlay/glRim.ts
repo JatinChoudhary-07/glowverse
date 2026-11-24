@@ -14,6 +14,7 @@ uniform float uThickness;
 uniform float uGlow;
 uniform float uRadius;
 uniform float uEnergy;
+uniform float uBrightness;
 uniform float uMotion;
 uniform vec3 uPrimary;
 uniform vec3 uSecondary;
@@ -51,7 +52,7 @@ void main() {
 
   float spread = max(6.0, uThickness * (1.2 + uGlow * 4.5) * (0.62 + 0.68 * uEnergy));
   float glow = exp(-max(inward - uThickness * 0.15, 0.0) / spread);
-  float alpha = clamp(core * 0.95 + glow * (0.16 + 0.52 * uEnergy), 0.0, 1.0);
+  float alpha = clamp(core * 0.95 + glow * (0.16 + 0.52 * uEnergy), 0.0, 1.0) * uBrightness;
 
   float angle = atan(point.y, point.x);
   float drift = 0.5 + 0.5 * sin(angle * 1.5 + uTime * 0.22 * uMotion);
@@ -91,6 +92,7 @@ export class RimRenderer {
   private readonly uGlow: WebGLUniformLocation | null
   private readonly uRadius: WebGLUniformLocation | null
   private readonly uEnergy: WebGLUniformLocation | null
+  private readonly uBrightness: WebGLUniformLocation | null
   private readonly uMotion: WebGLUniformLocation | null
   private readonly uPrimary: WebGLUniformLocation | null
   private readonly uSecondary: WebGLUniformLocation | null
@@ -151,6 +153,7 @@ export class RimRenderer {
     this.uGlow = gl.getUniformLocation(program, 'uGlow')
     this.uRadius = gl.getUniformLocation(program, 'uRadius')
     this.uEnergy = gl.getUniformLocation(program, 'uEnergy')
+    this.uBrightness = gl.getUniformLocation(program, 'uBrightness')
     this.uMotion = gl.getUniformLocation(program, 'uMotion')
     this.uPrimary = gl.getUniformLocation(program, 'uPrimary')
     this.uSecondary = gl.getUniformLocation(program, 'uSecondary')
@@ -177,6 +180,7 @@ export class RimRenderer {
   render(
     timeSeconds: number,
     energy: number,
+    brightness: number,
     motion: number,
     thicknessCss: number,
     glow: number,
@@ -187,6 +191,7 @@ export class RimRenderer {
     const gl = this.gl
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.useProgram(this.program)
+    gl.uniform1f(this.uBrightness, brightness)
 
     gl.uniform2f(this.uResolution, this.canvas.width, this.canvas.height)
     gl.uniform1f(this.uTime, timeSeconds)
