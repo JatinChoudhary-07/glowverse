@@ -48,6 +48,27 @@
       </section>
 
       <section class="section">
+        <h2>Source</h2>
+        <div class="row row--stack">
+          <div class="row__text">
+            <span><span id="sourceDot" class="dot" aria-hidden="true"></span>YT Music</span>
+            <small id="sourceDetail">Not connected — demo tracks available.</small>
+          </div>
+        </div>
+        <div class="row row--stack">
+          <div class="row__text">
+            <span>Pairing token</span>
+            <small>Paste this into the Glowverse extension popup.</small>
+          </div>
+          <div class="token-row">
+            <code id="pairingToken" class="token" aria-label="Pairing token"></code>
+            <button id="copyToken" class="ghost ghost--small" type="button">Copy</button>
+            <button id="regenerateToken" class="ghost ghost--small" type="button">Regenerate</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
         <h2>Demo</h2>
         <div class="row row--select">
           <div class="row__text">
@@ -106,7 +127,7 @@
         <div class="control">
           <div class="control__head">
             <span>Size</span>
-            <output id="lyricSizeValue">40 px</output>
+            <output id="lyricSizeValue">48 px</output>
           </div>
           <input id="lyricSize" type="range" min="20" max="72" step="1" />
         </div>
@@ -125,7 +146,7 @@
         <div class="row row--select">
           <div class="row__text">
             <span>Source</span>
-            <small>Auto follows the demo track's colours.</small>
+            <small>Auto follows the cover art, or the demo track.</small>
           </div>
           <select id="paletteMode" class="select">
             <option value="auto">Auto</option>

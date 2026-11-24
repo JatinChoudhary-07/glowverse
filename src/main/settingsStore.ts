@@ -1,7 +1,12 @@
 import { app } from 'electron'
+import { randomBytes } from 'node:crypto'
 import { readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { normalizeSettings, type Settings } from '../shared/settings'
+
+export function generatePairingToken(): string {
+  return randomBytes(24).toString('base64url')
+}
 
 export interface SettingsStore {
   get(): Settings
@@ -33,6 +38,12 @@ export function createSettingsStore(): SettingsStore {
   let timer: NodeJS.Timeout | null = null
   let dirty = false
 
+  // First run: mint the bridge pairing token before anything can read it.
+  if (!current.pairingToken) {
+    current = { ...current, pairingToken: generatePairingToken() }
+    dirty = true
+  }
+
   const flush = (): void => {
     if (timer) {
       clearTimeout(timer)
@@ -62,7 +73,7 @@ export function createSettingsStore(): SettingsStore {
     for (const listener of listeners) listener(current)
   }
 
-  return {
+  const store: SettingsStore = {
     get: () => current,
     patch(partial: Partial<Settings>): Settings {
       current = normalizeSettings({ ...current, ...partial })
@@ -76,4 +87,7 @@ export function createSettingsStore(): SettingsStore {
     },
     flush
   }
+
+  if (dirty) flush()
+  return store
 }

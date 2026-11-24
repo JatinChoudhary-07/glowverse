@@ -11,10 +11,10 @@ export const BRIGHTNESS_SWING = 0.09
 const BRIGHTNESS_HALF_SWING = BRIGHTNESS_SWING / 2
 /** Spec ceiling: at most three brightness changes per second. */
 export const MAX_BRIGHTNESS_CHANGES_PER_SECOND = 3
-/** Slightly under the ceiling so no BPM can drift over it. */
-const BRIGHTNESS_SLOPE_PER_SECOND = BRIGHTNESS_SWING * 2.5
-/** Minimum gap between direction changes: caps the pulse at under 3 per second. */
-const MIN_REVERSAL_GAP_MS = 360
+/** Fast enough to reach the full swing within one beat at 180 BPM. */
+const BRIGHTNESS_SLOPE_PER_SECOND = 1.1
+/** Above this beat rate the pulse would exceed three per second. */
+const MAX_PULSE_BPM = 180
 
 /** Critically damped smoothing (Game Programming Gems smoothDamp), no overshoot. */
 class CriticallyDamped {
@@ -34,29 +34,16 @@ class CriticallyDamped {
 }
 
 /**
- * Rate-limits brightness so no BPM can produce more than a 9% swing, and holds
- * the current value when a direction change would happen faster than ~2.8/s.
- * Above ~170 BPM the pulse tracks every other beat rather than every beat.
+ * Slew-limits brightness toward a target. The target itself is a one-pulse-per-beat
+ * cosine capped at 180 BPM, so the pulse count can never exceed three per second
+ * while the full 9% swing still lands on every beat.
  */
 class BrightnessLimiter {
   value = 1
 
-  private direction = 0
-  private elapsedMs = 0
-  private lastReversalMs = Number.NEGATIVE_INFINITY
-
   update(target: number, deltaSeconds: number): number {
-    this.elapsedMs += deltaSeconds * 1000
-    const difference = target - this.value
-    const wantedDirection = difference > 0 ? 1 : difference < 0 ? -1 : 0
-
-    if (wantedDirection !== 0 && wantedDirection !== this.direction) {
-      if (this.elapsedMs - this.lastReversalMs < MIN_REVERSAL_GAP_MS) return this.value
-      this.direction = wantedDirection
-      this.lastReversalMs = this.elapsedMs
-    }
-
     const maxDelta = BRIGHTNESS_SLOPE_PER_SECOND * deltaSeconds
+    const difference = target - this.value
     const step = difference > maxDelta ? maxDelta : difference < -maxDelta ? -maxDelta : difference
     this.value += step
     return this.value
@@ -79,6 +66,7 @@ export class EnergySource {
   private beatIndex = 0
   private envelope = IDLE_FLOOR
   private idlePhase = 0
+  private pulsePhaseMs = 0
 
   update(deltaSeconds: number, mode: MotionMode, reducedMotion: boolean, bpm: number, isPlaying: boolean): number {
     const effectiveMode: MotionMode = reducedMotion || !isPlaying ? 'idle' : mode
@@ -111,8 +99,17 @@ export class EnergySource {
     const smoothed = this.spring.update(this.envelope, deltaSeconds, SPRING_SMOOTH_TIME_S)
     const energy = Math.min(1.3, Math.max(0, smoothed))
 
-    const modulationTarget = 1 + BRIGHTNESS_HALF_SWING * Math.min(1, Math.max(-1, (this.envelope - 0.45) / 0.4))
-    this.brightness = this.limiter.update(modulationTarget, deltaSeconds)
+    let brightnessTarget = 1
+    if (effectiveMode === 'beat') {
+      const pulseBpm = Math.min(MAX_PULSE_BPM, Math.max(40, bpm || FALLBACK_BPM))
+      const pulsePeriodMs = 60000 / pulseBpm
+      this.pulsePhaseMs = (this.pulsePhaseMs + deltaMs) % pulsePeriodMs
+      const phase = (this.pulsePhaseMs / pulsePeriodMs) * Math.PI * 2
+      brightnessTarget = 1 + BRIGHTNESS_HALF_SWING * Math.cos(phase)
+    } else if (effectiveMode === 'idle') {
+      brightnessTarget = 1 + BRIGHTNESS_HALF_SWING * 0.45 * Math.sin(this.idlePhase * 0.55)
+    }
+    this.brightness = this.limiter.update(brightnessTarget, deltaSeconds)
 
     return energy
   }

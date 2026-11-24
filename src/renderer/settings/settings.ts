@@ -1,5 +1,5 @@
 import type { DisplayInfo } from '../../shared/display'
-import type { DemoCommand, DemoTrackSummary, NowPlaying } from '../../shared/nowPlaying'
+import type { DemoCommand, DemoTrackSummary, NowPlaying, SourceStatus } from '../../shared/nowPlaying'
 import type { Settings } from '../../shared/settings'
 
 function element<T extends HTMLElement>(id: string): T {
@@ -15,6 +15,12 @@ const paletteModeSelect = element<HTMLSelectElement>('paletteMode')
 const cyclePaletteButton = element<HTMLButtonElement>('cyclePalette')
 const displaysList = element<HTMLUListElement>('displays')
 const status = element<HTMLSpanElement>('status')
+
+const sourceDot = element<HTMLSpanElement>('sourceDot')
+const sourceDetail = element<HTMLElement>('sourceDetail')
+const tokenCode = element<HTMLElement>('pairingToken')
+const copyTokenButton = element<HTMLButtonElement>('copyToken')
+const regenerateTokenButton = element<HTMLButtonElement>('regenerateToken')
 
 const demoTrackSelect = element<HTMLSelectElement>('demoTrack')
 const demoPlayButton = element<HTMLButtonElement>('demoPlay')
@@ -96,6 +102,7 @@ function applyTheme(settings: Settings): void {
 
 function render(settings: Settings): void {
   applyTheme(settings)
+  tokenCode.textContent = settings.pairingToken || '—'
   const active = document.activeElement
   if (active !== overlayToggle) overlayToggle.checked = settings.overlayEnabled
   if (active !== lyricsToggle) lyricsToggle.checked = settings.showLyrics
@@ -132,12 +139,21 @@ function patch(next: Partial<Settings>): void {
   requestAnimationFrame(flushPatch)
 }
 
+function renderSource(next: SourceStatus): void {
+  sourceDot.classList.toggle('dot--on', next.connected)
+  sourceDetail.textContent = next.connected
+    ? `${next.title || 'YT Music'} — ${next.artist || 'Unknown artist'}`
+    : 'Not connected — demo tracks available.'
+}
+
 function formatTime(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000))
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`
 }
 
 function renderDemo(report: NowPlaying): void {
+  // Demo controls only ever reflect the demo player, never a streamed source.
+  if (report.source !== 'demo') return
   demoState = report
   if (document.activeElement !== demoTrackSelect) demoTrackSelect.value = report.trackId
   demoSeek.max = String(report.durationMs)
@@ -241,6 +257,33 @@ demoTrackSelect.addEventListener('change', () => {
   sendDemo({ action: 'select', trackId: demoTrackSelect.value })
 })
 
+copyTokenButton.addEventListener('click', () => {
+  const token = tokenCode.textContent ?? ''
+  if (!token) return
+  void navigator.clipboard
+    .writeText(token)
+    .then(() => {
+      status.textContent = 'Pairing token copied'
+    })
+    .catch((error: unknown) => {
+      console.error('[glowverse] could not copy the token', error)
+      status.textContent = 'Could not copy the token'
+    })
+})
+
+regenerateTokenButton.addEventListener('click', () => {
+  void window.glowverse
+    .regeneratePairingToken()
+    .then((saved) => {
+      render(saved)
+      status.textContent = 'New pairing token generated'
+    })
+    .catch((error: unknown) => {
+      console.error('[glowverse] could not regenerate the token', error)
+      status.textContent = 'Could not regenerate the token'
+    })
+})
+
 cyclePaletteButton.addEventListener('click', () => {
   paletteIndex = (paletteIndex + 1) % TEST_PALETTES.length
   const palette = TEST_PALETTES[paletteIndex]
@@ -266,8 +309,11 @@ for (const color of colorInputs) {
 
 window.glowverse.onSettings((settings) => render(settings))
 window.glowverse.onNowPlaying((report) => renderDemo(report))
+window.glowverse.onSourceStatus((next) => renderSource(next))
 
 void window.glowverse.getSettings().then((settings) => {
   render(settings)
   return Promise.all([renderDisplays(), loadDemoTracks()])
 }).then(() => window.glowverse.getNowPlaying()).then((report) => renderDemo(report))
+
+void window.glowverse.getSourceStatus().then((next) => renderSource(next))

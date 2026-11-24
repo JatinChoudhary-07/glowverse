@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Glowverse</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        padding: 18px;
+        width: 280px;
+        background: #08080a;
+        color: #f2f2f5;
+        font: 13px/1.45 -apple-system, 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+      }
+      h1 {
+        margin: 0 0 2px;
+        font-size: 14px;
+        font-weight: 650;
+      }
+      p {
+        margin: 0 0 14px;
+        color: rgba(242, 242, 245, 0.46);
+        font-size: 12px;
+      }
+      label {
+        display: block;
+        margin-bottom: 6px;
+        color: rgba(242, 242, 245, 0.46);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 9px 10px;
+        border-radius: 9px;
+        border: 1px solid #1c1c22;
+        background: #101014;
+        color: #f2f2f5;
+        font: 11.5px ui-monospace, monospace;
+      }
+      button {
+        width: 100%;
+        margin-top: 10px;
+        padding: 9px 12px;
+        border-radius: 9px;
+        border: 1px solid #2a2a33;
+        background: #16161c;
+        color: #f2f2f5;
+        font: inherit;
+        font-size: 12.5px;
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: #ff5fa2;
+      }
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-top: 14px;
+        color: rgba(242, 242, 245, 0.62);
+        font-size: 12px;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: rgba(242, 242, 245, 0.28);
+      }
+      .dot--on {
+        background: #ff5fa2;
+        box-shadow: 0 0 8px rgba(255, 95, 162, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Glowverse</h1>
+    <p>Paste the pairing token from Glowverse settings.</p>
+    <label for="token">Pairing token</label>
+    <input id="token" spellcheck="false" autocomplete="off" />
+    <button id="save" type="button">Pair</button>
+    <div class="status"><span id="dot" class="dot"></span><span id="state">Checking…</span></div>
+    <script src="popup.js"></script>
+  </body>
+</html>

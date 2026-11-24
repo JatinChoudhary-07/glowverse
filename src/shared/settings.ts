@@ -22,6 +22,8 @@ export interface Settings {
   lyricSize: number
   /** Per track lyric shift in 100 ms steps; resets when the track changes. */
   lyricOffsetMs: number
+  /** Pairing token the browser extension must present to the local bridge. */
+  pairingToken: string
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -29,14 +31,15 @@ export const DEFAULT_SETTINGS: Settings = {
   paused: false,
   showLyrics: true,
   motionMode: 'beat',
-  paletteMode: 'custom',
+  paletteMode: 'auto',
   primaryColor: '#FF5FA2',
   secondaryColor: '#6F8BFF',
   thickness: 14,
   glow: 1,
   cornerRadius: 14,
   lyricSize: 48,
-  lyricOffsetMs: 0
+  lyricOffsetMs: 0,
+  pairingToken: ''
 }
 
 const MOTION_MODES: readonly MotionMode[] = ['beat', 'idle', 'off']
@@ -59,6 +62,10 @@ function readEnum<T extends string>(value: unknown, allowed: readonly T[], fallb
   return typeof value === 'string' && (allowed as readonly string[]).includes(value) ? (value as T) : fallback
 }
 
+function readToken(value: unknown): string {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{16,128}$/.test(value) ? value : ''
+}
+
 /** Merge unknown JSON onto defaults, clamping numbers and dropping unknown keys. */
 export function normalizeSettings(input: unknown): Settings {
   const source = typeof input === 'object' && input !== null ? (input as Record<string, unknown>) : {}
@@ -74,6 +81,7 @@ export function normalizeSettings(input: unknown): Settings {
     glow: readNumber(source.glow, 0, 2, DEFAULT_SETTINGS.glow),
     cornerRadius: readNumber(source.cornerRadius, 0, 64, DEFAULT_SETTINGS.cornerRadius),
     lyricSize: readNumber(source.lyricSize, 20, 72, DEFAULT_SETTINGS.lyricSize),
-    lyricOffsetMs: Math.round(readNumber(source.lyricOffsetMs, -2000, 2000, DEFAULT_SETTINGS.lyricOffsetMs) / 100) * 100
+    lyricOffsetMs: Math.round(readNumber(source.lyricOffsetMs, -2000, 2000, DEFAULT_SETTINGS.lyricOffsetMs) / 100) * 100,
+    pairingToken: readToken(source.pairingToken)
   }
 }
