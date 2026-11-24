@@ -22,7 +22,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   overlayEnabled: true,
   paused: false,
-  motionMode: 'idle',
+  motionMode: 'beat',
   paletteMode: 'custom',
   primaryColor: '#FF5FA2',
   secondaryColor: '#6F8BFF',

@@ -252,6 +252,56 @@ input[type='color']::-webkit-color-swatch {
   opacity: 1;
 }
 
+.select {
+  appearance: none;
+  padding: 9px 32px 9px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background-color: var(--bg-raised);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-dim) 50%),
+    linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 50%,
+    calc(100% - 11px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.select:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.ghost {
+  align-self: flex-start;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease-out,
+    background 160ms ease-out;
+}
+
+.ghost:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+  background: rgba(242, 242, 245, 0.04);
+}
+
+.hint {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
 .foot {
   border-top: 1px solid var(--line);
   padding-top: 18px;

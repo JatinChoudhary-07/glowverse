@@ -60,6 +60,17 @@
           </div>
           <input id="cornerRadius" type="range" min="0" max="64" step="1" />
         </div>
+        <div class="row row--select">
+          <div class="row__text">
+            <span>Motion</span>
+            <small>Beat sync follows the 96 BPM demo track until audio capture lands.</small>
+          </div>
+          <select id="motionMode" class="select">
+            <option value="beat">Beat sync</option>
+            <option value="idle">Idle glow</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
       </section>
 
       <section class="section">
@@ -77,6 +88,10 @@
             <output id="secondaryValue">#6F8BFF</output>
           </div>
           <input id="secondaryColor" type="color" />
+        </div>
+        <div class="row row--stack">
+          <button id="cyclePalette" class="ghost" type="button">Cycle test palette</button>
+          <small class="hint">Crossfades the rim palette over 800 ms.</small>
         </div>
       </section>
 

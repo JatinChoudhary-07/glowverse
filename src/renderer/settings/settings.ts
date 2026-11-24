@@ -8,8 +8,19 @@ function element<T extends HTMLElement>(id: string): T {
 }
 
 const overlayToggle = element<HTMLInputElement>('overlayEnabled')
+const motionSelect = element<HTMLSelectElement>('motionMode')
+const cyclePaletteButton = element<HTMLButtonElement>('cyclePalette')
 const displaysList = element<HTMLUListElement>('displays')
 const status = element<HTMLSpanElement>('status')
+
+// Temporary M1 palettes so the OKLab crossfade can be auditioned by hand.
+const TEST_PALETTES: readonly { primary: string; secondary: string }[] = [
+  { primary: '#FF5FA2', secondary: '#6F8BFF' },
+  { primary: '#3BE0C8', secondary: '#7C5CFF' },
+  { primary: '#FFB35C', secondary: '#FF4D6D' },
+  { primary: '#8FE8FF', secondary: '#4A6BFF' }
+]
+let paletteIndex = 0
 
 interface SliderBinding {
   input: HTMLInputElement
@@ -64,6 +75,7 @@ function render(settings: Settings): void {
   // Never fight a control the user is currently touching.
   const active = document.activeElement
   if (active !== overlayToggle) overlayToggle.checked = settings.overlayEnabled
+  if (active !== motionSelect) motionSelect.value = settings.motionMode
   for (const slider of sliders) {
     if (active !== slider.input) slider.input.value = String(settings[slider.key])
     slider.output.textContent = slider.format(settings[slider.key])
@@ -126,6 +138,16 @@ async function renderDisplays(): Promise<void> {
 
 overlayToggle.addEventListener('change', () => {
   patch({ overlayEnabled: overlayToggle.checked })
+})
+
+motionSelect.addEventListener('change', () => {
+  patch({ motionMode: motionSelect.value as Settings['motionMode'] })
+})
+
+cyclePaletteButton.addEventListener('click', () => {
+  paletteIndex = (paletteIndex + 1) % TEST_PALETTES.length
+  const palette = TEST_PALETTES[paletteIndex]
+  patch({ primaryColor: palette.primary, secondaryColor: palette.secondary })
 })
 
 for (const slider of sliders) {

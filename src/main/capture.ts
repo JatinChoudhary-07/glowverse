@@ -2,7 +2,7 @@ import { app, BrowserWindow } from 'electron'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const CAPTURE_DELAY_MS = 700
+const DEFAULT_CAPTURE_DELAY_MS = 700
 
 /**
  * Dev-only visual check: GLOWVERSE_CAPTURE=1 writes a PNG of each window into
@@ -10,6 +10,7 @@ const CAPTURE_DELAY_MS = 700
  */
 export function captureWindowIfRequested(window: BrowserWindow, name: string): void {
   if (!process.env['GLOWVERSE_CAPTURE']) return
+  const delay = Number(process.env['GLOWVERSE_CAPTURE_DELAY'] ?? DEFAULT_CAPTURE_DELAY_MS)
   setTimeout(() => {
     if (window.isDestroyed()) return
     void window.webContents
@@ -22,5 +23,5 @@ export function captureWindowIfRequested(window: BrowserWindow, name: string): v
         console.log(`[glowverse] captured ${file}`)
       })
       .catch((error: unknown) => console.error('[glowverse] capture failed', error))
-  }, CAPTURE_DELAY_MS)
+  }, Number.isFinite(delay) ? delay : DEFAULT_CAPTURE_DELAY_MS)
 }
