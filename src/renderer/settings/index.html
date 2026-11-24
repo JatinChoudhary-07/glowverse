@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws:"
+    />
+    <title>Glowverse</title>
+    <link rel="stylesheet" href="./settings.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <div class="mark" aria-hidden="true"></div>
+        <div class="masthead__text">
+          <h1>Glowverse</h1>
+          <p>Ambient light at the edge of every screen.</p>
+        </div>
+      </header>
+
+      <section class="section">
+        <h2>Overlay</h2>
+        <div class="row row--toggle">
+          <div class="row__text">
+            <span>Show overlay</span>
+            <small>Draw the rim above every display.</small>
+          </div>
+          <label class="switch">
+            <input id="overlayEnabled" type="checkbox" />
+            <span class="switch__track" aria-hidden="true"></span>
+          </label>
+        </div>
+        <div class="row row--stack">
+          <div class="row__text"><span>Displays</span></div>
+          <ul id="displays" class="displays"></ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Rim</h2>
+        <div class="control">
+          <div class="control__head">
+            <span>Thickness</span>
+            <output id="thicknessValue">14 px</output>
+          </div>
+          <input id="thickness" type="range" min="4" max="40" step="1" />
+        </div>
+        <div class="control">
+          <div class="control__head">
+            <span>Glow</span>
+            <output id="glowValue">1.0×</output>
+          </div>
+          <input id="glow" type="range" min="0" max="2" step="0.05" />
+        </div>
+        <div class="control">
+          <div class="control__head">
+            <span>Corner radius</span>
+            <output id="cornerRadiusValue">14 px</output>
+          </div>
+          <input id="cornerRadius" type="range" min="0" max="64" step="1" />
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Palette</h2>
+        <div class="control control--color">
+          <div class="control__head">
+            <span>Primary</span>
+            <output id="primaryValue">#FF5FA2</output>
+          </div>
+          <input id="primaryColor" type="color" />
+        </div>
+        <div class="control control--color">
+          <div class="control__head">
+            <span>Secondary</span>
+            <output id="secondaryValue">#6F8BFF</output>
+          </div>
+          <input id="secondaryColor" type="color" />
+        </div>
+      </section>
+
+      <footer class="foot">
+        <span id="status">Ready</span>
+      </footer>
+    </main>
+    <script type="module" src="./settings.ts"></script>
+  </body>
+</html>

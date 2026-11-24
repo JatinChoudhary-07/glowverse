@@ -1,0 +1,23 @@
+{
+  "name": "glowverse",
+  "productName": "Glowverse",
+  "version": "0.1.0",
+  "description": "Ambient rim glow and word-by-word lyrics above the desktop.",
+  "main": "./out/main/index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "npm run typecheck && electron-vite build",
+    "start": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "icon": "node scripts/makeTrayIcon.cjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "electron": "^45.4.1",
+    "electron-vite": "^6.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8"
+  }
+}

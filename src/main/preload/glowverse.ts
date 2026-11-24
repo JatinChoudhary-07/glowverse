@@ -1,0 +1,22 @@
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
+import type { DisplayInfo } from '../../shared/display'
+import { IPC } from '../../shared/ipc'
+import type { Settings } from '../../shared/settings'
+
+const api = {
+  getSettings: (): Promise<Settings> => ipcRenderer.invoke(IPC.settingsGet) as Promise<Settings>,
+  patchSettings: (patch: Partial<Settings>): Promise<Settings> =>
+    ipcRenderer.invoke(IPC.settingsPatch, patch) as Promise<Settings>,
+  getDisplays: (): Promise<DisplayInfo[]> => ipcRenderer.invoke(IPC.displaysGet) as Promise<DisplayInfo[]>,
+  onSettings: (callback: (settings: Settings) => void): (() => void) => {
+    const handler = (_event: IpcRendererEvent, settings: Settings): void => callback(settings)
+    ipcRenderer.on(IPC.settingsChanged, handler)
+    return () => {
+      ipcRenderer.removeListener(IPC.settingsChanged, handler)
+    }
+  }
+}
+
+contextBridge.exposeInMainWorld('glowverse', api)
+
+export type SettingsApi = typeof api
