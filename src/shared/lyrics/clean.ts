@@ -11,7 +11,9 @@ const FEATURED_SUFFIX = /\s*[-–—]?\s*(?:feat\.?|ft\.?|featuring|with)\s+.*$/
 const REMASTER_SUFFIX = /\s*[-–—]?\s*(?:\d{4}\s+)?(?:digital(?:ly)?\s+)?remaster(?:ed)?(?:\s+version)?(?:\s+\d{4})?\s*$/i
 const NOISE_SUFFIX =
   /\s*[-–—]\s*(?:[^–—-]+\s+)?(?:live|version|edit|radio edit|remix|acoustic|instrumental|demo|mono|stereo)(?:\s+\d{4})?\s*$/i
-const EXTRA_ARTISTS = /\s*(?:,|&|×|x|vs\.?|with|feat\.?|ft\.?|featuring)\s+.*$/i
+// YT Music writes duets as "A and B"; "and" is only split in this last-resort
+// variant, so co-artist names such as "Florence and the Machine" still work.
+const EXTRA_ARTISTS = /\s*(?:,|&|×|x|vs\.?|with|and|feat\.?|ft\.?|featuring)\s+.*$/i
 
 /** Strips the suffixes streaming titles carry but lyric databases do not. */
 export function cleanTitle(raw: string): string {

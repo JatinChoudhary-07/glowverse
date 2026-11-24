@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { after, describe, it } from 'node:test'
 import { buildLyricQueries, cleanArtist, cleanTitle, lyricsCacheKey, primaryArtist } from '../src/shared/lyrics/clean'
 import { parseLrc } from '../src/shared/lyrics/lrc'
-import { pickBestSearchResult } from '../src/shared/lyrics/lrclib'
+import { createLrclibProvider, pickBestSearchResult } from '../src/shared/lyrics/lrclib'
 import type { LyricsProvider } from '../src/shared/lyrics/provider'
 import { createLyricsService, type LyricsUpdate } from '../src/main/lyrics/lyricsService'
 
@@ -77,6 +77,16 @@ describe('title and artist cleaning', () => {
     assert.equal(primaryArtist('Headliner & Guest'), 'Headliner')
   })
 
+  it('falls back to the lead artist for duets written with "and"', () => {
+    assert.equal(cleanArtist('The Weeknd and Ariana Grande'), 'The Weeknd and Ariana Grande')
+    assert.equal(primaryArtist('The Weeknd and Ariana Grande'), 'The Weeknd')
+    const variants = buildLyricQueries({ title: 'Signal', artist: 'Headliner and Guest', album: '', durationMs: 200000 })
+    assert.deepEqual(
+      variants.map((variant) => variant.artist),
+      ['Headliner and Guest', 'Headliner']
+    )
+  })
+
   it('tries cleaned, lead-artist and raw queries in order', () => {
     const variants = buildLyricQueries({
       title: 'Signal (feat. Guest)',
@@ -132,6 +142,45 @@ describe('LRCLIB search picking', () => {
       200
     )
     assert.equal(best?.instrumental, true)
+  })
+})
+
+describe('LRCLIB provider requests', () => {
+  const json = (body: unknown, status = 200): Response =>
+    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+
+  const provider = (handler: (url: URL) => Response): ReturnType<typeof createLrclibProvider> =>
+    createLrclibProvider({ fetchImpl: (async (input: RequestInfo | URL) => handler(new URL(String(input)))) as typeof fetch })
+
+  it('skips the exact lookup when the duration is outside LRCLIB limits', async () => {
+    const urls: string[] = []
+    const lookup = await provider((url) => {
+      urls.push(url.pathname)
+      return json([])
+    }).fetch(
+      { title: 'Live Set', artist: 'Headliner', album: '', durationMs: 5_400_000 },
+      new AbortController().signal
+    )
+
+    assert.equal(lookup, null)
+    assert.deepEqual([...new Set(urls)], ['/api/search'])
+  })
+
+  it('treats a rejected exact request as a miss and still searches', async () => {
+    const lookup = await provider((url) =>
+      url.pathname === '/api/get'
+        ? json({ message: 'duration: must be between 1 and 3600' }, 400)
+        : json([])
+    ).fetch({ title: 'Signal', artist: 'Headliner', album: '', durationMs: 200000 }, new AbortController().signal)
+
+    assert.equal(lookup, null)
+  })
+
+  it('still throws on server errors so the lookup can retry', async () => {
+    const failing = provider(() => json({ message: 'boom' }, 503))
+    await assert.rejects(() =>
+      failing.fetch({ title: 'Signal', artist: 'Headliner', album: '', durationMs: 200000 }, new AbortController().signal)
+    )
   })
 })
 

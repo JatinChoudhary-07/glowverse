@@ -6,6 +6,9 @@ export const LRCLIB_BASE_URL = 'https://lrclib.net'
 export const DEFAULT_USER_AGENT = 'Glowverse/0.1.0 (+https://github.com/glowverse/glowverse)'
 
 const DURATION_TOLERANCE_SECONDS = 3
+// LRCLIB rejects /api/get outside this range (live sets, streams, unknown duration).
+const EXACT_MIN_SECONDS = 1
+const EXACT_MAX_SECONDS = 3600
 
 interface LrclibItem {
   trackName?: string
@@ -53,7 +56,7 @@ export function createLrclibProvider(options: LrclibProviderOptions = {}): Lyric
       },
       signal
     )
-    if (response.status === 404) return null
+    if (rejected(response)) return null
     if (!response.ok) throw new Error(`lrclib exact ${response.status}`)
     return (await response.json()) as LrclibItem
   }
@@ -71,6 +74,7 @@ export function createLrclibProvider(options: LrclibProviderOptions = {}): Lyric
       },
       signal
     )
+    if (rejected(response)) return []
     if (!response.ok) throw new Error(`lrclib search ${response.status}`)
     const body = (await response.json()) as unknown
     return Array.isArray(body) ? (body as LrclibItem[]) : []
@@ -82,10 +86,14 @@ export function createLrclibProvider(options: LrclibProviderOptions = {}): Lyric
       const durationSeconds = Math.round(query.durationMs / 1000)
       const variants = buildLyricQueries(query)
 
-      for (const variant of variants) {
-        const item = await exact(variant, durationSeconds, signal)
-        const lookup = toLookup(item, 'exact')
-        if (lookup) return lookup
+      // An out-of-range duration is a validation error, not a miss: go straight to search.
+      const canAskExact = durationSeconds >= EXACT_MIN_SECONDS && durationSeconds <= EXACT_MAX_SECONDS
+      if (canAskExact) {
+        for (const variant of variants) {
+          const item = await exact(variant, durationSeconds, signal)
+          const lookup = toLookup(item, 'exact')
+          if (lookup) return lookup
+        }
       }
 
       for (const variant of variants) {
@@ -138,6 +146,11 @@ export function pickBestSearchResult(
   }
 
   return best
+}
+
+/** Client errors other than rate limiting mean "nothing here", not a failed lookup. */
+function rejected(response: Response): boolean {
+  return response.status >= 400 && response.status < 500 && response.status !== 429
 }
 
 function toLookup(item: LrclibItem | null, match: 'exact' | 'search'): LyricsLookup | null {

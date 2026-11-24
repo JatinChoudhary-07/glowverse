@@ -30,6 +30,7 @@ let settings: Settings | null = null
 let nowPlaying: NowPlaying | null = null
 let paletteReady = false
 let lastTrackId = ''
+let lastLinesKey = ''
 let lastSeekToken = -1
 let running = false
 let frameHandle = 0
@@ -69,16 +70,23 @@ function syncPalette(): void {
 function handleReport(report: NowPlaying): void {
   const now = performance.now()
   const trackChanged = report.trackId !== lastTrackId
+  // Lyrics arrive after the first report of a track, so a stable signature tells
+  // us when the line set changed without reconfiguring on every 250 ms frame.
+  const linesKey = `${report.lines.length}:${report.lines[report.lines.length - 1]?.startMs ?? -1}`
+  const linesChanged = linesKey !== lastLinesKey
 
   if (trackChanged) {
     lastTrackId = report.trackId
     clock.reset(report.positionMs, report.isPlaying, now)
+  } else if (clock.report(report.positionMs, report.isPlaying, now)) {
+    stage.clear()
+  }
+
+  if (trackChanged || linesChanged) {
+    lastLinesKey = linesKey
     stage.configure(report.trackId, report.lines)
     // Counts only: lyric text stays out of logs.
     console.info(`[glowverse] overlay lyrics ${report.lines.length} lines`)
-
-  } else if (clock.report(report.positionMs, report.isPlaying, now)) {
-    stage.clear()
   }
 
   if (report.seekToken !== lastSeekToken && !trackChanged) stage.clear()
